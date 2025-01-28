@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.medxp.domain.usuario.DadosAutenticacao;
+import br.com.medxp.domain.usuario.Usuario;
+import br.com.medxp.infra.security.DadosTokenJWT;
+import br.com.medxp.infra.security.TokenService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -19,18 +22,18 @@ public class AutenticacaoController {
 	@Autowired
 	private AuthenticationManager manager;
 
+	@Autowired
+	private TokenService tokenService;
+
 	@PostMapping
 	public ResponseEntity<?> efetuarLogin(@RequestBody @Valid DadosAutenticacao dados) {
+
+		var AuthenticationToken = new UsernamePasswordAuthenticationToken(dados.login(), dados.senha());
+
+		var authentication = manager.authenticate(AuthenticationToken);
+
+		var tokenJWT = tokenService.gerarToken((Usuario) authentication.getPrincipal());
 		
-		System.out.println("\\n\\n\\nEntrei no método pelo menos\n\n\n");
-
-		// Recebemos um DTO no controller, mas devemos transformá-lo em um DTO
-		// reconhecido pelo Spring
-		var token = new UsernamePasswordAuthenticationToken(dados.login(), dados.senha());
-
-		// Devolve um objeto que representa um usuário autenticado no sistema
-		var authentication = manager.authenticate(token);
-
-		return ResponseEntity.ok().build();
+		return ResponseEntity.ok(new DadosTokenJWT(tokenJWT));
 	}
 }
